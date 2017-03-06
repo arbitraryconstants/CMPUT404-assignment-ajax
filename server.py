@@ -22,7 +22,7 @@
 
 
 import flask
-from flask import Flask, request
+from flask import Flask, request, redirect, jsonify
 import json
 app = Flask(__name__)
 app.debug = True
@@ -36,7 +36,8 @@ app.debug = True
 class World:
     def __init__(self):
         self.clear()
-        
+    
+    # Use update for PATCH? Not necessary for PUT
     def update(self, entity, key, value):
         entry = self.space.get(entity,dict())
         entry[key] = value
@@ -55,7 +56,8 @@ class World:
         return self.space
 
 # you can test your webservice from the commandline
-# curl -v   -H "Content-Type: appication/json" -X PUT http://127.0.0.1:5000/entity/X -d '{"x":1,"y":1}' 
+# curl -v   -H "Content-Type: appication/json" -X PUT http://127.0.0.1:5000/entity/cat -d '{"x":1,"y":1}'
+# curl -v   -H "Content-Type: appication/json" -X POST http://127.0.0.1:5000/entity/cat -d '{"x":1,"y":1}'
 
 myWorld = World()          
 
@@ -71,30 +73,49 @@ def flask_post_json():
     else:
         return json.loads(request.form.keys()[0])
 
+
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    # Re: redirect
+    # Written by Xavier Combelle (https://stackoverflow.com/users/128629/xavier-combelle)
+    # on Stackoverflow: https://stackoverflow.com/questions/14343812/redirecting-to-url-in-flask
+    print "redirect"
+    return redirect("/static/index.html", code=302)
 
+
+# Re: returning data, status code and headers
+# Writen by aabilio(https://stackoverflow.com/users/1715957/aabilio)
+# on Stackoverflow: https://stackoverflow.com/questions/26079754/flask-how-to-return-a-success-status-code-for-ajax-call
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    data = flask_post_json()
+    myWorld.set(entity, data)
+    data = json.dumps(myWorld.get(entity))
+    return data, 200, {"Access-Control-Allow-Origin": "*", "Content-type":"application/json"}
+
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return None
+    data = json.dumps(myWorld.world())
+    return data, 200, {"Access-Control-Allow-Origin": "*", "Content-type":"application/json"}
+
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    data = json.dumps(myWorld.get(entity))
+    return data, 200, {"Access-Control-Allow-Origin": "*", "Content-type":"application/json"}
 
+                      
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    data = json.dumps(myWorld.clear())
+    return data, 200, {"Access-Control-Allow-Origin": "*", "Content-type":"application/json"}
+
 
 if __name__ == "__main__":
     app.run()
