@@ -80,7 +80,6 @@ def hello():
     # Re: redirect
     # Written by Xavier Combelle (https://stackoverflow.com/users/128629/xavier-combelle)
     # on Stackoverflow: https://stackoverflow.com/questions/14343812/redirecting-to-url-in-flask
-    print "redirect"
     return redirect("/static/index.html", code=302)
 
 
